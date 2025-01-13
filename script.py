@@ -47,7 +47,23 @@ def get_league_data(summoner_id):
 summoners = [
     {"name": "Rocoto", "tag": "2817"},
     {"name": "Jaz1725", "tag": "LAN"},
-    {"name": "Snixx", "tag": "LAN"}
+    {"name": "Snixx", "tag": "LAN"},
+    {"name": "Chenyao", "tag": "cutie"},
+    {"name": "TioSpidey", "tag": "LAN"},
+    {"name": "Askyex", "tag": "3012"},
+    {"name": "l 4yd4n l", "tag": "LAN"},
+    {"name": "WarwickEngineer", "tag": "3029"},
+    {"name": "Rodrimen", "tag": "LAN"},
+    #{"name": "atlantis temperr", "tag": "LAN"},
+    {"name": "jefferyxdlol", "tag": "LAN"},
+    #{"name": "ßasura", "tag": "LAN"},
+    {"name": "JecquesLoL", "tag": "LAN"},
+    {"name": "Azback", "tag": "117"},
+    {"name": "Squishyx", "tag": "LAN"},
+    {"name": "Giasper", "tag": "LAN"},
+    #{"name": "AyDaN", "tag": "LAN"},
+    #{"name": "Faren", "tag": "LAN"},
+    #{"name": "artrox2612", "tag": "LAN"}
 ]
 
 # Función para leer datos históricos del CSV (si existe)
@@ -60,16 +76,16 @@ def read_existing_csv(filename="docs/summoner_data.csv"):
 # Función para convertir las divisiones y LP a un valor numérico
 def division_to_numeric(division, rank, lp):
     division_order = {
-        "Iron": 0,
-        "Bronze": 10,
-        "Silver": 20,
-        "Gold": 30,
-        "Platinum": 40,
-        "Emerald": 50,
-        "Diamond": 60,
-        "Master": 70,
-        "GrandMaster": 80,
-        "Challenger": 90
+        "IRON": 0,
+        "BRONZE": 4,
+        "SILVER": 8,
+        "GOLD": 12,
+        "PLATINUM": 16,
+        "EMERALD": 20,
+        "DIAMOND": 24,
+        "MASTER": 28,
+        "GRANDMASTER": 29,
+        "CHALLENGER": 30
     }
 
     rank_order = {
@@ -84,7 +100,7 @@ def division_to_numeric(division, rank, lp):
     rank_value = rank_order.get(rank, 0)
     
     # Cada LP sube el valor del rango de la división, lo que permite un valor numérico en una escala continua
-    return division_value + rank_value + (lp / 100)  # LP divide por 100 para que entre en la escala de 0 a 1 dentro de la división
+    return division_value + (rank_value + (lp / 100))  # LP divide por 100 para que entre en la escala de 0 a 1 dentro de la división
 
 # Obtener el PUUID, datos adicionales y de liga para cada summoner
 def fetch_summoner_info(summoners):
@@ -151,18 +167,45 @@ def generate_graph(data, filename="docs/summoner_graph.png"):
     # Convertir la fecha a un formato adecuado para el eje X
     df['date'] = pd.to_datetime(df['date']).dt.date  # Solo la fecha sin la hora
     
+    # Mapear numeric_value a divisiones y rangos
+    divisions = [
+        "Iron IV", "Iron III", "Iron II", "Iron I",
+        "Bronze IV", "Bronze III", "Bronze II", "Bronze I",
+        "Silver IV", "Silver III", "Silver II", "Silver I",
+        "Gold IV", "Gold III", "Gold II", "Gold I",
+        "Platinum IV", "Platinum III", "Platinum II", "Platinum I",
+        "Emerald IV", "Emerald III", "Emerald II", "Emerald I",
+        "Diamond IV", "Diamond III", "Diamond II", "Diamond I",
+        "Master", "Grand Master", "Challenger"
+    ]
+    division_map = {i: division for i, division in enumerate(divisions)}
+    
+    # Determinar rango dinámico del eje Y
+    max_value = int(df['numeric_value'].max())  # Convertir a entero
+    min_value = int(df['numeric_value'].min())  # Convertir a entero
+    
+    # Calcular índices mínimo y máximo
+    max_index = min(((max_value // 4 + 1) * 4), len(divisions))  # Redondear al siguiente rango completo
+    y_ticks = list(range(min_value, max_index))  # Convertir a lista de valores enteros
+    y_labels = [division_map[i] for i in y_ticks]
+    
     # Graficar
     for summoner_name in df['name'].unique():
         summoner_data = df[df['name'] == summoner_name]
-        plt.plot(summoner_data['date'], summoner_data['numeric_value'], label=summoner_name)
+        plt.plot(summoner_data['date'], summoner_data['numeric_value'], marker="o", label=summoner_name)
     
     plt.title("Progreso de LP y Divisiones de los Invocadores")
     plt.xlabel('Fecha')
-    plt.ylabel('Combinación de División y LP')
+    plt.ylabel('División y LP')
     plt.xticks(rotation=45)
+    
+    # Configurar etiquetas dinámicas del eje Y
+    plt.yticks(ticks=y_ticks, labels=y_labels)
+    
     plt.tight_layout()
     plt.legend()
     plt.savefig(filename)  # Guardar el gráfico como archivo PNG
+
 
 # Ejecutar y guardar los resultados
 if __name__ == "__main__":
